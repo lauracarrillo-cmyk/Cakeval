@@ -1,12 +1,13 @@
-import { useState } from 'react'
+
+import { useState, type FormEvent } from 'react'
 import logo from './assets/logo.png'
-import presentationVideo from './assets/cakeval-presentacion.mp4'
 
 const NAV_LINKS = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'Misión', href: '#mision' },
   { label: 'Visión', href: '#vision' },
   { label: 'Objetivos', href: '#objetivos' },
+  { label: 'Encuesta', href: '#encuesta' },
   { label: 'Contacto', href: '#contacto' },
 ]
 
@@ -18,9 +19,101 @@ const SPECIFIC_OBJECTIVES = [
   { num: '05', text: 'Mejorar las estrategias.' },
 ]
 
+const SURVEY_SECTIONS = [
+  {
+    title: 'Estrés y trabajo/estudio',
+    description: 'Cuéntanos cómo te sientes durante tus actividades diarias.',
+    questions: [
+      {
+        id: 'stress-frequency',
+        text: '¿Con qué frecuencia sientes que te estresas durante tu jornada diaria?',
+        options: ['Casi nunca o nunca.', 'Algunas veces a la semana.', 'Casi todos los días.', 'Todo el tiempo, de manera constante.'],
+      },
+      {
+        id: 'stress-level',
+        text: 'Si midieras tu nivel de estrés actual de 1 a 5, ¿en cuál te ubicas?',
+        options: ['1 — Muy bajo (tranquilo/a)', '2 — Bajo', '3 — Moderado', '4 — Alto', '5 — Crítico (al 100% / colapsado/a)'],
+      },
+      {
+        id: 'exhaustion',
+        text: 'Cuando estás trabajando o estudiando, ¿te sientes física o mentalmente agotado/a?',
+        options: ['No, mantengo mi energía constante.', 'Solo al final del día.', 'Con frecuencia, a mitad de la jornada ya me siento cansado/a.', 'Siempre me siento exhausto/a, incluso antes de empezar.'],
+      },
+      {
+        id: 'anxiety',
+        text: '¿Sientes que tus actividades diarias (estudio/trabajo) te sobrepasan o te generan ansiedad?',
+        options: ['Rara vez o nunca.', 'Ocasionalmente, cuando hay entregas o exámenes.', 'Frecuentemente.', 'Siempre.'],
+      },
+    ],
+  },
+  {
+    title: 'Sueño y recuperación',
+    description: 'Queremos conocer la cantidad y calidad de tu descanso.',
+    questions: [
+      {
+        id: 'sleep-hours',
+        text: 'En promedio, ¿cuántas horas duermes por noche?',
+        options: ['Más de 8 horas.', 'Entre 6 y 8 horas.', 'Entre 4 y 5 horas.', 'Menos de 4 horas.'],
+      },
+      {
+        id: 'sleep-quality',
+        text: '¿Cómo calificas la calidad de tu descanso al despertar?',
+        options: ['Excelente, me despierto con energía.', 'Aceptable, pero a veces me cuesta levantarme.', 'Mala, me despierto cansado/a como si no hubiera dormido.', 'Pésima, sufro de insomnio o interrupciones constantes.'],
+      },
+    ],
+  },
+  {
+    title: 'Hábitos de salud y bienestar',
+    description: 'Finalmente, revisemos las rutinas que acompañan tu bienestar.',
+    questions: [
+      {
+        id: 'exercise',
+        text: '¿Realizas actividad física o ejercicio con regularidad?',
+        options: ['Sí, 3 o más veces por semana.', 'De 1 a 2 veces por semana.', 'Solo ocasionalmente (1 o 2 veces al mes).', 'No realizo ningún tipo de ejercicio.'],
+      },
+      {
+        id: 'nutrition',
+        text: '¿Cómo describirías tus hábitos de alimentación en un día normal?',
+        options: ['Balanceados y saludables (como a horas fijas y de forma equilibrada).', 'Moderados (intento comer bien, pero a veces consumo comida rápida).', 'Irregulares (salto comidas u horarios por falta de tiempo).', 'Poco saludables (alto consumo de ultraprocesados, azúcares o comida rápida).'],
+      },
+      {
+        id: 'stress-response',
+        text: 'Durante un momento de alto estrés o saturación mental, ¿qué sueles hacer?',
+        options: ['Hago una pausa, respiro o me distraigo un momento.', 'Sigo trabajando/estudiando sin parar hasta terminar.', 'Como en exceso o consumo bebidas con cafeína/energizantes.', 'Me frustro o me bloqueo por completo.'],
+      },
+      {
+        id: 'visual-tool',
+        text: '¿Te gustaría contar con una herramienta visual que mida tus datos emocionales y te ayude a saber cuándo hacer una pausa?',
+        options: ['Sí, me sería de gran ayuda.', 'Tal vez, me gustaría probarla.', 'No estoy seguro/a.', 'No lo considero necesario.'],
+      },
+    ],
+  },
+]
+
+const TOTAL_QUESTIONS = SURVEY_SECTIONS.reduce(
+  (total, section) => total + section.questions.length,
+  0,
+)
+
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string>>({})
+  const [surveySubmitted, setSurveySubmitted] = useState(false)
 
+  const answeredQuestions = Object.keys(surveyAnswers).length
+  const surveyProgress = (answeredQuestions / TOTAL_QUESTIONS) * 100
+
+  const handleSurveySubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (answeredQuestions === TOTAL_QUESTIONS) {
+      setSurveySubmitted(true)
+    }
+  }
+
+  const resetSurvey = () => {
+    setSurveyAnswers({})
+    setSurveySubmitted(false)
+  }
 
   return (
     <div className="min-h-screen">
@@ -30,6 +123,7 @@ export default function App() {
           <a href="#inicio">
             <img src={logo} alt="Cakeval" className="h-14 w-auto" />
           </a>
+
           <nav className="hidden md:flex gap-6">
             {NAV_LINKS.map(l => (
               <a
@@ -41,16 +135,19 @@ export default function App() {
               </a>
             ))}
           </nav>
+
           <a
             href="#contacto"
             className="hidden md:inline-flex items-center gap-2 bg-[#6B5CE7] hover:bg-[#4F3FD3] text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors duration-200"
           >
             Empecemos
           </a>
+
           <button
             className="md:hidden p-2 text-[#6B5CE7]"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menú"
+            type="button"
           >
             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
               {menuOpen ? (
@@ -65,6 +162,7 @@ export default function App() {
             </svg>
           </button>
         </div>
+
         {menuOpen && (
           <div className="md:hidden bg-white border-t border-[#EEEAFF] px-6 py-4 flex flex-col gap-4">
             {NAV_LINKS.map(l => (
@@ -86,14 +184,19 @@ export default function App() {
         id="inicio"
         className="relative pt-24 min-h-screen flex items-center overflow-hidden bg-white"
       >
-        {/* decorative blobs */}
         <div
           className="absolute top-0 right-0 w-[600px] h-[600px] opacity-10 rounded-full"
-          style={{ background: 'radial-gradient(circle, #89CFF0 0%, transparent 70%)', transform: 'translate(30%, -20%)' }}
+          style={{
+            background: 'radial-gradient(circle, #89CFF0 0%, transparent 70%)',
+            transform: 'translate(30%, -20%)',
+          }}
         />
         <div
           className="absolute bottom-0 left-0 w-[400px] h-[400px] opacity-10 rounded-full"
-          style={{ background: 'radial-gradient(circle, #6B5CE7 0%, transparent 70%)', transform: 'translate(-20%, 30%)' }}
+          style={{
+            background: 'radial-gradient(circle, #6B5CE7 0%, transparent 70%)',
+            transform: 'translate(-20%, 30%)',
+          }}
         />
 
         <div className="relative max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-16 items-center">
@@ -101,6 +204,7 @@ export default function App() {
             <span className="inline-block bg-[#6B5CE7]/10 text-[#6B5CE7] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6 border border-[#6B5CE7]/20">
               Tabio, Cundinamarca
             </span>
+
             <h1 className="text-5xl md:text-6xl font-extrabold text-[#1A1535] leading-[1.1] mb-6">
               La clave que{' '}
               <span
@@ -114,9 +218,11 @@ export default function App() {
               </span>{' '}
               tu marca
             </h1>
+
             <p className="text-[#4A4570] text-lg leading-relaxed mb-10 max-w-md">
               Publicidad creativa, accesible y efectiva para los pequeños emprendimientos de Tabio. Tu visibilidad es nuestra misión.
             </p>
+
             <div className="flex flex-wrap gap-4">
               <a
                 href="#mision"
@@ -132,11 +238,16 @@ export default function App() {
               </a>
             </div>
           </div>
+
           <div className="flex justify-center">
             <div className="relative">
               <div
                 className="absolute inset-0 rounded-3xl opacity-40"
-                style={{ background: 'linear-gradient(135deg, #6B5CE7, #89CFF0)', filter: 'blur(40px)', transform: 'scale(1.1)' }}
+                style={{
+                  background: 'linear-gradient(135deg, #6B5CE7, #89CFF0)',
+                  filter: 'blur(40px)',
+                  transform: 'scale(1.1)',
+                }}
               />
               <div className="relative bg-white rounded-3xl p-10 border border-[#EEEAFF] shadow-xl">
                 <img src={logo} alt="Cakeval logo" className="w-64 h-auto" />
@@ -159,7 +270,10 @@ export default function App() {
             <span className="inline-block bg-[#89CFF0]/15 text-[#6B5CE7] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5 border border-[#89CFF0]/40">
               Conoce Cakeval
             </span>
-            <h2 id="video-title" className="text-4xl md:text-5xl font-extrabold text-[#1A1535] leading-tight">
+            <h2
+              id="video-title"
+              className="text-4xl md:text-5xl font-extrabold text-[#1A1535] leading-tight"
+            >
               Creatividad que impulsa ideas
             </h2>
           </div>
@@ -167,20 +281,21 @@ export default function App() {
           <div className="relative">
             <div
               className="absolute -inset-3 md:-inset-5 rounded-3xl opacity-20"
-              style={{ background: 'linear-gradient(135deg, #6B5CE7, #89CFF0)', filter: 'blur(24px)' }}
+              style={{
+                background: 'linear-gradient(135deg, #6B5CE7, #89CFF0)',
+                filter: 'blur(24px)',
+              }}
               aria-hidden="true"
             />
             <div className="relative rounded-3xl overflow-hidden border border-[#EEEAFF] bg-white p-2 md:p-3 shadow-xl">
-              <video
-                className="w-full max-h-[75vh] rounded-2xl bg-[#1A1535] object-contain"
-                controls
-                playsInline
-                preload="metadata"
-                aria-label="Video de presentación de Cakeval"
-              >
-                <source src={presentationVideo} type="video/mp4" />
-                Tu navegador no puede reproducir este video.
-              </video>
+              <iframe
+                className="w-full aspect-video rounded-2xl bg-[#1A1535]"
+                src="https://www.youtube.com/embed/E8zlLaIqHCM"
+                title="Video de presentación de Cakeval"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
             </div>
           </div>
         </div>
@@ -215,6 +330,7 @@ export default function App() {
               </div>
               <span className="text-[#6B5CE7] font-semibold text-sm tracking-widest uppercase">Nuestra Misión</span>
             </div>
+
             <h2 className="text-4xl font-extrabold text-[#1A1535] leading-tight mb-6">
               Apoyamos el crecimiento de tu negocio
             </h2>
@@ -229,10 +345,7 @@ export default function App() {
       </section>
 
       {/* VISION */}
-      <section
-        id="vision"
-        className="py-24 bg-white"
-      >
+      <section id="vision" className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
           <div>
             <div className="flex items-center gap-3 mb-5">
@@ -244,6 +357,7 @@ export default function App() {
               </div>
               <span className="text-[#6B5CE7] font-semibold text-sm tracking-widest uppercase">Nuestra Visión</span>
             </div>
+
             <h2 className="text-4xl font-extrabold text-[#1A1535] leading-tight mb-6">
               Líderes en publicidad municipal para el 2029
             </h2>
@@ -326,10 +440,7 @@ export default function App() {
       </section>
 
       {/* SPECIFIC OBJECTIVES */}
-      <section
-        id="objetivos"
-        className="py-24 bg-white"
-      >
+      <section id="objetivos" className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-[#6B5CE7] font-semibold text-sm tracking-widest uppercase">Lo que hacemos</span>
@@ -360,7 +471,6 @@ export default function App() {
               </div>
             ))}
 
-            {/* filler card */}
             <div
               className="hidden lg:flex bg-[#6B5CE7] rounded-2xl p-7 items-end"
               style={{ background: 'linear-gradient(135deg, #6B5CE7, #89CFF0)' }}
@@ -376,11 +486,156 @@ export default function App() {
         </div>
       </section>
 
+      {/* WELLBEING SURVEY */}
+      <section id="encuesta" className="py-24 bg-white scroll-mt-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <span className="inline-block bg-[#6B5CE7]/10 text-[#6B5CE7] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6 border border-[#6B5CE7]/20">
+              Diagnóstico de bienestar
+            </span>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#1A1535] mb-5 leading-tight">
+              Estrés, descanso y estilo de vida
+            </h2>
+            <p className="text-[#4A4570] text-lg leading-relaxed">
+              Esta encuesta nos ayuda a identificar hábitos diarios, niveles de agotamiento y factores que influyen en tu bienestar físico y emocional.
+            </p>
+          </div>
+
+          {surveySubmitted ? (
+            <div className="max-w-2xl mx-auto rounded-3xl border border-[#6B5CE7]/20 bg-[#6B5CE7]/5 px-8 py-14 text-center shadow-sm" role="status">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#6B5CE7] flex items-center justify-center text-white">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                  <path d="m5 12 4 4L19 6" />
+                </svg>
+              </div>
+              <h3 className="text-3xl font-extrabold text-[#1A1535] mb-3">¡Gracias por participar!</h3>
+              <p className="text-[#4A4570] text-lg leading-relaxed mb-8">
+                Has completado el diagnóstico. Esta información permitirá comprender mejor los hábitos y necesidades de bienestar.
+              </p>
+              <button
+                type="button"
+                onClick={resetSurvey}
+                className="border-2 border-[#6B5CE7] text-[#6B5CE7] hover:bg-[#6B5CE7] hover:text-white font-semibold px-7 py-3 rounded-full transition-colors"
+              >
+                Responder de nuevo
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSurveySubmit} className="rounded-3xl border border-[#EEEAFF] bg-white shadow-lg overflow-hidden">
+              <div className="sticky top-20 z-10 bg-white/95 backdrop-blur-md border-b border-[#EEEAFF] px-6 md:px-10 py-5">
+                <div className="flex items-center justify-between gap-4 mb-3">
+                  <p className="font-semibold text-[#1A1535]">Tu progreso</p>
+                  <p className="text-sm font-semibold text-[#6B5CE7]" aria-live="polite">
+                    {answeredQuestions} de {TOTAL_QUESTIONS} respondidas
+                  </p>
+                </div>
+                <div className="h-2.5 rounded-full bg-[#EEEAFF] overflow-hidden" aria-hidden="true">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${surveyProgress}%`, background: 'linear-gradient(90deg, #6B5CE7, #89CFF0)' }}
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 md:px-10 py-10">
+                {SURVEY_SECTIONS.map((section, sectionIndex) => (
+                  <fieldset
+                    key={section.title}
+                    className={`border-0 p-0 m-0 ${sectionIndex > 0 ? 'mt-14 pt-12 border-t border-[#EEEAFF]' : ''}`}
+                  >
+                    <legend className="w-full mb-8">
+                      <span className="flex items-start gap-4 text-left">
+                        <span className="shrink-0 w-10 h-10 rounded-xl bg-[#6B5CE7] text-white flex items-center justify-center font-bold">
+                          {sectionIndex + 1}
+                        </span>
+                        <span>
+                          <span className="block text-2xl font-extrabold text-[#1A1535]">{section.title}</span>
+                          <span className="block text-[#4A4570] mt-1">{section.description}</span>
+                        </span>
+                      </span>
+                    </legend>
+
+                    <div className="space-y-10">
+                      {section.questions.map((question, questionIndex) => {
+                        const questionNumber = SURVEY_SECTIONS.slice(0, sectionIndex).reduce(
+                          (total, currentSection) => total + currentSection.questions.length,
+                          0,
+                        ) + questionIndex + 1
+
+                        return (
+                          <div key={question.id}>
+                            <p className="text-lg font-bold text-[#1A1535] mb-4 leading-snug">
+                              <span className="text-[#6B5CE7] mr-2">{questionNumber}.</span>
+                              {question.text}
+                            </p>
+                            <div className="grid gap-3">
+                              {question.options.map((option, optionIndex) => (
+                                <label
+                                  key={option}
+                                  className={`flex items-center gap-4 rounded-xl border px-4 py-3.5 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-[#89CFF0] focus-within:ring-offset-2 ${
+                                    surveyAnswers[question.id] === option
+                                      ? 'border-[#6B5CE7] bg-[#6B5CE7]/5 shadow-sm'
+                                      : 'border-[#EEEAFF] hover:border-[#89CFF0] hover:bg-[#89CFF0]/5'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={question.id}
+                                    value={option}
+                                    checked={surveyAnswers[question.id] === option}
+                                    onChange={() => setSurveyAnswers(current => ({ ...current, [question.id]: option }))}
+                                    required
+                                    className="sr-only"
+                                  />
+                                  <span
+                                    className={`w-7 h-7 shrink-0 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-colors ${
+                                      surveyAnswers[question.id] === option
+                                        ? 'border-[#6B5CE7] bg-[#6B5CE7] text-white'
+                                        : 'border-[#89CFF0] text-[#6B5CE7]'
+                                    }`}
+                                    aria-hidden="true"
+                                  >
+                                    {surveyAnswers[question.id] === option ? (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <path d="m5 12 4 4L19 6" />
+                                      </svg>
+                                    ) : (
+                                      String.fromCharCode(65 + optionIndex)
+                                    )}
+                                  </span>
+                                  <span className="text-[#4A4570] leading-snug">{option}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </fieldset>
+                ))}
+
+                <div className="mt-14 pt-8 border-t border-[#EEEAFF] text-center">
+                  <p className="text-sm text-[#4A4570] mb-5">
+                    {answeredQuestions === TOTAL_QUESTIONS
+                      ? 'Todo listo. Ya puedes enviar tus respuestas.'
+                      : `Completa las ${TOTAL_QUESTIONS - answeredQuestions} preguntas restantes para enviar.`}
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={answeredQuestions !== TOTAL_QUESTIONS}
+                    className="text-white font-bold px-10 py-4 rounded-full text-lg bg-[#6B5CE7] hover:bg-[#4F3FD3] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    Enviar respuestas
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+        </div>
+      </section>
+
       {/* CONTACT / CTA */}
-      <section
-        id="contacto"
-        className="py-24 bg-white"
-      >
+      <section id="contacto" className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <span className="inline-block bg-[#6B5CE7]/10 text-[#6B5CE7] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6 border border-[#6B5CE7]/20">
             Contáctanos
